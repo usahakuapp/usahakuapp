@@ -1,0 +1,91 @@
+    <!DOCTYPE html>
+    <html lang="en" data-bs-theme="dark">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Usahaku</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css">
+        <script src="https://kit.fontawesome.com/ae360af17e.js" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+            
+    <body>
+            
+        <div class="wrapper">
+            <side-bar></side-bar>
+
+            <div class="main">
+                <nav class="navbar navbar-expand px-3 border-bottom">
+                    <button class="btn" id="sidebar-toggle" type="button">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse navbar">
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AKUN
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">   
+                                <li><a id="logoutButton" class="dropdown-item" href="#">LOGOUT</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <main class="content px-3 py-2">
+                    <div class="container-fluid">
+                        <div class="mb-3">
+                            <h4>Dashboard UMKM</h4>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 col-md-6 d-flex">
+                                <div class="card flex-fill border-0">
+                                    <div class="card-body p-0">
+                                        <div class="row g-0">
+                                            <div class="col-12">
+                                                <div class="col-12">
+                                                    <div class="m-3">
+                                                        <h4>Selamat Datang, <span id="umkmName"></span></h4>
+                                                        <p class="mb-0">Tanggal: <span id="currentDate"></span></p>
+                                                        <p class="mb-0">Jumlah Karyawan: <span id="empCount"></span></p>
+                                                        <p class="mb-0">Jam Masuk: <span id="working_hour"></span></p>
+                                                        <p class="mb-0">Jam Pulang: <span id="closing_hour"></span></p> 
+                                                        <p class="mt-4 mb-0"><a href="https://drive.google.com/uc?export=download&id=18SZU3_APVBOytbh-P9GypF_Q57WOcrJV" id="downloadApplication">Unduh Aplikasi Presensi Untuk Karyawan</a></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 d-flex">
+                                <div class="card flex-fill border-0">
+                                    <div class="card-body py-4">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center">
+                                                    <div id="qrcode" style="display: inline-block;"></div>
+                                                    <span id="additionalText" style="margin-left: 30px; margin-bottom: 30px; margin-right: 30px" align="justify">Kode QR yang digunakan karyawan untuk melakukan absensi, unduh serta print kode QR ini dan tempel di tempat UMKM mu !</span>
+                                                </div>
+                                                <p class="mt-3 mb-0"><a href="#" id="downloadQrCode">Unduh kode QR</a></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                
+                <my-footer></my-footer>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+        <script src="js/script.js"></script>
+        <script type="module" src="js/dashboard.js"></script>
+    </body>
+
+    </html>

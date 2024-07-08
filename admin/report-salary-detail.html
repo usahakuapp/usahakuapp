@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USAHAKU</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-timepicker/0.5.2/css/bootstrap-timepicker.min.css">
+    <script src="https://kit.fontawesome.com/ae360af17e.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="wrapper">
+        <side-bar></side-bar>
+
+        <div class="main">
+            <nav class="navbar navbar-expand px-3 border-bottom">
+                <button class="btn" id="sidebar-toggle" type="button">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse navbar">
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AKUN
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">   
+                                <li><a id="logoutButton" class="dropdown-item" href="#">LOGOUT</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="content px-3 py-2">
+                <div class="container-fluid">
+                    <!-- Table Element -->
+                    <div class="card border-0">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                Detail Gaji Karyawan
+                            </h5>
+                        </div>
+                        <div class="card-body mb-3">
+                            <!-- report starts -->
+                            <section id="salary-detail" class="salary-detail section-padding">
+                                <div class="container ">
+                                    <div class="row m-0">
+                                        <div class="col-md-12 p-0 pb-4">
+                                            <form action="#" class="bg-BLACK p-4 m-auto">
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <div class="mb-3">
+                                                            <label for="umkm_late_cut" class="form-label custom-label label-penggajian">Gaji Pokok</label>
+                                                            <input class="form-control" placeholder="Gaji Pokok" required="" type="text" id="emp_salary">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="mb-3">
+                                                            <label for="umkm_late_cut" class="form-label custom-label label-penggajian">Potongan Keterlambatan</label>
+                                                            <input class="form-control" placeholder="Potongan Keterlambatan" required="" type="text" id="absent_late_cut">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="mb-3">
+                                                            <label for="umkm_late_cut" class="form-label custom-label label-penggajian">Kehadiran dalam 1 bulan</label>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Kehadiran" required="" type="number" id="present_days">
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label for="totaldays" class="form-label custom-label label-penggajian">Hari</label>
+                                                                </div>
+                                                            </div>
+                                                        </div><br>
+                                                    </div>
+                                                    <div class="col-md-12 mb-3 border-top"> <!-- Added border-bottom class here -->
+                                                        <br><label class="form-label custom-label label-penggajian"><em>Optional (Tidak Wajib)</em></label>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="mb-3">
+                                                            <label for="umkm_late_cut" class="form-label custom-label label-penggajian">Potongan Satu</label>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Potongan Satu Keterangan" required="" type="text" id="salarycut_one_info">
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Potongan Satu" required="" type="number" id="salarycut_one" value="0">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="mb-3">
+                                                            <label for="umkm_late_cut" class="form-label custom-label label-penggajian">Potongan Kedua</label>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Potongan Kedua Keterangan" required="" type="text" id="salarycut_two_info">
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Potongan Kedua" required="" type="number" id="salarycut_two" value="0">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="mb-3">
+                                                            <label for="umkm_late_cut" class="form-label custom-label label-penggajian">Penambahan Pertama</label>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Penambahan Pertama Keterangan" required="" type="text" id="salaryadd_one_info">
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Penambahan Pertama" required="" type="number" id="salaryadd_one" value="0">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="mb-3">
+                                                            <label for="umkm_late_cut" class="form-label custom-label label-penggajian">Penambahan Kedua</label>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Penambahan Kedua Keterangan" required="" type="text" id="salaryadd_two_info">
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <input class="form-control" placeholder="Penambahan Kedua" required="" type="number" id="salaryadd_two" value="0">
+                                                                </div>
+                                                            </div><br>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12 mb-3 border-top"> <!-- Added border-bottom class here -->
+                                                        <br><label class="form-label custom-label" style="color: rgb(241, 49, 49); font-size: 15px;"><B>TOTAL DITERIMA</B></label>
+                                                        <div class="col-md-6">
+                                                            <input class="form-control" placeholder="Gaji Akhir Karyawan" required="" type="number" id="final_salary" value="0">
+                                                        </div>
+                                                    </div>
+                                                    <button class="btn btn-secondary btn-lg btn-block mt-3" id="button_export_pdf" type="submit">Print Slip Gaji</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                            <!-- report ends -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <my-footer></my-footer>
+
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+            <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"></script>
+
+            <script type="module" src="js/report-salary.js"></script>
+            <script type="module" src="js/dashboard.js"></script>
+        </div>
+    </div>
+</body>
+
+</html>
