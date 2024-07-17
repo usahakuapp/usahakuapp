@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, set, update, child, onValue, remove  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, set, update, child, onValue, push, remove  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -114,6 +114,21 @@ window.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+  }
+
+  if (window.location.pathname.endsWith("izin-karyawan.html")) {
+    const urlParams = new URLSearchParams(window.location.search);
+    umkm_uid = urlParams.get('uid');
+    console.log("UMKM UID:", umkm_uid); // Log UMKM UID for debugging
+    document.getElementById("filterMonthYear").addEventListener("change", showLeaves);
+
+    if (!umkm_uid) {
+      console.error("UMKM UID not found in URL parameters.");
+      return;
+    }
+
+    populateEmployeeNames();
+    setupAddLeaveButton();
   }
 });
 
@@ -791,3 +806,173 @@ if (window.location.pathname.endsWith("karyawan-absent-working.html")) {
 }
 
 // ============================================================================== FETCH ABSEN MASUK END
+
+// ============================================================================== IZIN KARYAWAN START
+
+function setupAddLeaveButton() {
+  const buttonAddLeave = document.getElementById("button_add_leave");
+  if (buttonAddLeave) {
+    buttonAddLeave.addEventListener("click", InsertLeaveData);
+  }
+}
+
+function InsertLeaveData(e) {
+  e.preventDefault();
+
+  const employeeSelect = document.getElementById("employee_name");
+  const employeeNik = employeeSelect.options[employeeSelect.selectedIndex].value;
+  const employeeName = employeeSelect.options[employeeSelect.selectedIndex].text;
+  const leaveDate = document.getElementById("leave_date").value;
+  const leaveReason = document.getElementById("leave_reason").value;
+
+  if (!employeeNik || !leaveDate || !leaveReason) {
+    alert("Semua field harus diisi!");
+    return;
+  }
+
+  // Generate a unique key by removing all symbols from emp_nik and leave_date
+  const sanitizedNik = employeeNik.replace(/[^a-zA-Z0-9]/g, '');
+  const sanitizedDate = leaveDate.replace(/[^a-zA-Z0-9]/g, '');
+  const leaveKey = `${sanitizedNik}${sanitizedDate}`;
+
+  const leaveData = {
+    emp_nik: employeeNik,
+    emp_name: employeeName,
+    leave_date: leaveDate,
+    leave_reason: leaveReason,
+    umkm_uid: umkm_uid
+  };
+
+  const leaveRef = ref(database, `emp_permit/${leaveKey}`);
+  set(leaveRef, leaveData)
+    .then(() => {
+      alert("Izin berhasil disimpan.");
+      document.getElementById("employee_name").value = "";
+      document.getElementById("leave_date").value = "";
+      document.getElementById("leave_reason").value = "";
+    })
+    .catch((error) => {
+      console.error("Error saving leave:", error);
+      alert("Gagal menyimpan izin. Silakan coba lagi.");
+    });
+}
+
+function populateEmployeeNames() {
+  const employeeSelect = document.getElementById("employee_name");
+  const employeesRef = ref(database, "employee");
+
+  onValue(employeesRef, (snapshot) => {
+    const employeesData = snapshot.val();
+    console.log("Fetched Employees Data:", employeesData); // Log fetched employee data for debugging
+    employeeSelect.innerHTML = ""; // Clear existing options
+
+    if (employeesData) {
+      let hasActiveEmployees = false;
+      for (const empNik in employeesData) {
+        const employee = employeesData[empNik];
+        console.log(`Checking employee: ${employee.emp_name}, umkm_uid: ${employee.umkm_uid}, emp_status: ${employee.emp_status}`); // Detailed log for each employee
+        if (employee.umkm_uid === umkm_uid && employee.emp_status === "active") {
+          hasActiveEmployees = true;
+          const option = document.createElement("option");
+          option.value = employee.emp_nik; // Use emp_nik as value
+          option.textContent = employee.emp_name;
+          employeeSelect.appendChild(option);
+        }
+      }
+      if (!hasActiveEmployees) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No active employees found";
+        employeeSelect.appendChild(option);
+      }
+    } else {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No employees data found";
+      employeeSelect.appendChild(option);
+    }
+  }, (error) => {
+    console.error("Error fetching employee data:", error.message);
+  });
+}
+
+function showLeaves() {
+  const selectedMonthYear = document.getElementById("filterMonthYear").value;
+  console.log("Selected Month-Year:", selectedMonthYear); // Debug log
+
+  if (!selectedMonthYear) {
+    alert("Pilih bulan dan tahun terlebih dahulu.");
+    return;
+  }
+
+  const [selectedYear, selectedMonth] = selectedMonthYear.split("-");
+  const leavesRef = ref(database, "emp_permit");
+
+  onValue(leavesRef, (snapshot) => {
+    const leavesData = snapshot.val();
+    const leaveListContent = document.getElementById("leaveListContent");
+    leaveListContent.innerHTML = "";
+
+    console.log("Leaves Data:", leavesData); // Debug log
+
+    if (leavesData) {
+      let hasLeaves = false;
+      for (const key in leavesData) {
+        const leave = leavesData[key];
+        if (leave.umkm_uid === umkm_uid) {
+          const leaveDate = new Date(leave.leave_date);
+          const leaveYear = leaveDate.getFullYear().toString();
+          const leaveMonth = (leaveDate.getMonth() + 1).toString().padStart(2, "0");
+
+          if (leaveYear === selectedYear && leaveMonth === selectedMonth) {
+            hasLeaves = true;
+            const listItem = document.createElement("li");
+            listItem.className = "list-group-item d-flex justify-content-between align-items-center";
+            listItem.textContent = `${leave.emp_name}: ${leave.leave_date} - ${leave.leave_reason}`;
+
+            const removeButton = document.createElement("button");
+            removeButton.className = "btn btn-danger btn-sm";
+            removeButton.textContent = "X";
+            removeButton.addEventListener("click", () => {
+              removeLeave(key);
+            });
+
+            listItem.appendChild(removeButton);
+            leaveListContent.appendChild(listItem);
+          }
+        }
+      }
+      if (!hasLeaves) {
+        const listItem = document.createElement("li");
+        listItem.className = "list-group-item";
+        listItem.textContent = "Tidak ada izin/cuti pada bulan ini.";
+        leaveListContent.appendChild(listItem);
+      }
+    } else {
+      const listItem = document.createElement("li");
+      listItem.className = "list-group-item";
+      listItem.textContent = "Tidak ada izin/cuti pada bulan ini.";
+      leaveListContent.appendChild(listItem);
+    }
+  });
+}
+
+function removeLeave(key) {
+  const leaveRef = ref(database, `emp_permit/${key}`);
+  remove(leaveRef).then(() => {
+    alert("Izin berhasil dihapus.");
+    showLeaves(); // Refresh the list
+  }).catch((error) => {
+    console.error('Error removing leave:', error);
+    alert("Gagal menghapus izin. Silakan coba lagi.");
+  });
+}
+
+// Ensure the modal button event is set up correctly
+document.querySelector("#showInactiveEmployeeModal").addEventListener("click", () => {
+  fetchInactiveEmployees();
+  showLeaves(); // Also call showLeaves to ensure it updates when modal is opened
+});
+
+// ============================================================================== IZIN KARYAWAN END
+

@@ -1,21 +1,18 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, set, update, child, onValue, remove  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getDatabase, ref, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-apiKey: "AIzaSyAHXvYRB71qQINDAkWHNjUxupHkwDlYEvM",
-authDomain: "presensi-usahaku.firebaseapp.com",
-databaseURL: "https://presensi-usahaku-default-rtdb.firebaseio.com",
-projectId: "presensi-usahaku",
-storageBucket: "presensi-usahaku.appspot.com",
-messagingSenderId: "526464379600",
-appId: "1:526464379600:web:78eb52350ef1ff8291ccd5",
-measurementId: "G-YYJQ8W8E2R"
+    apiKey: "AIzaSyAHXvYRB71qQINDAkWHNjUxupHkwDlYEvM",
+    authDomain: "presensi-usahaku.firebaseapp.com",
+    databaseURL: "https://presensi-usahaku-default-rtdb.firebaseio.com",
+    projectId: "presensi-usahaku",
+    storageBucket: "presensi-usahaku.appspot.com",
+    messagingSenderId: "526464379600",
+    appId: "1:526464379600:web:78eb52350ef1ff8291ccd5",
+    measurementId: "G-YYJQ8W8E2R"
 };
 
 // Initialize Firebase
@@ -24,179 +21,214 @@ const auth = getAuth(app);
 const database = getDatabase(app);
 
 let umkm_uid;
+let umkm_name = '';
 
-//KETIKA WEB TERBUKA
+// Ensure the script is loaded
+console.log("Script loaded.");
+
 window.addEventListener("DOMContentLoaded", () => {
+    console.log("DOMContentLoaded event fired.");
+
     const urlParams = new URLSearchParams(window.location.search);
     umkm_uid = urlParams.get('uid');
 
+    console.log("UMKM UID:", umkm_uid);
+
     if (window.location.pathname.endsWith("report-absent-working.html")) {
-        const exportButton = document.getElementById('button_export_excel');
+        console.log("On the correct page: report-absent-working.html");
+
+        // Retrieve umkm_name
+        getUmkmName(umkm_uid);
+
+        // Populate the employee dropdown
+        populateEmployees(umkm_uid);
+
+        // Add event listener to the button
+        const exportButton = document.getElementById('button_export_pdf');
         exportButton.addEventListener('click', (event) => {
             event.preventDefault(); // Prevent the default form submission behavior
-            exportToExcel();
+
+            const dateFrom = new Date(document.getElementById('date_from').value);
+            const dateTo = new Date(document.getElementById('date_to').value);
+
+            // Check if the date range exceeds 31 days
+            const timeDiff = dateTo - dateFrom;
+            const dayDiff = timeDiff / (1000 * 3600 * 24);
+            if (dayDiff > 31) {
+                alert('Data presensi tidak dapat menampilkan lebih dari 31 hari.');
+            } else {
+                generatePDFReport(dateFrom, dateTo);
+            }
         });
+    } else {
+        console.log("Not on the report-absent-working.html page");
     }
 });
 
-//===================================================================================== LAPORAN ABSEN MASUK START
+// Function to retrieve umkm_name
+function getUmkmName(umkm_uid) {
+    const umkmRef = ref(database, 'umkm/' + umkm_uid);
 
-const exportToExcel = async () => {
-    try {
-        const selectedMonth = document.getElementById('month').value;
-        const selectedYear = document.getElementById('year').value;
+    console.log("Fetching UMKM name...");
 
-        // Dapatkan jumlah hari dalam bulan yang dipilih
-        const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+    onValue(umkmRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const umkmData = snapshot.val();
+            umkm_name = umkmData.umkm_name || 'Bintang ATK';
+            console.log("UMKM name:", umkm_name);
+        } else {
+            console.log("No UMKM found.");
+        }
+    }, {
+        onlyOnce: true
+    });
+}
 
-        // Buat workbook baru dan tambahkan worksheet
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Absensi');
+// Function to populate the employee dropdown
+function populateEmployees(umkm_uid) {
+    const employeeSelect = document.getElementById('employee');
+    const employeeRef = ref(database, 'employee');
 
-        // Tambahkan judul ke worksheet
-        const titleRow = worksheet.addRow(['Absensi Presensi ' + selectedMonth + '-' + selectedYear]);
-        titleRow.font = { bold: true };
-        titleRow.alignment = { vertical: 'middle', horizontal: 'left' };
+    console.log("Fetching employees...");
 
-        // Tambahkan header ke worksheet
-        const headers = [
-            'No',
-            'Nama Karyawan',
-            ...Array.from({ length: daysInMonth }, (_, i) => {
-                const day = i + 1;
-                return day.toString().padStart(2, '0'); // Tampilkan hanya hari
-            })
-        ];
-        worksheet.addRow(headers);
-
-        console.log('umkm_uid:', umkm_uid);
-
-        // Ambil data karyawan untuk memetakan emp_nik ke emp_name
-        const employeeDataRef = ref(database, 'employee');
-        const employeeDataSnapshot = await get(employeeDataRef);
-        const employeeData = employeeDataSnapshot.val();
-
-        // Filter karyawan hanya untuk yang memiliki emp_status: "active"
-        const activeEmployees = Object.values(employeeData).filter(employee => employee.emp_status === "active");
-
-        // Buat map untuk pencarian cepat detail karyawan berdasarkan emp_nik
-        const employeeMap = activeEmployees.reduce((acc, employee) => {
-            acc[employee.emp_nik] = employee;
-            return acc;
-        }, {});
-
-        // Ambil data dari Firebase di mana umkm_uid sesuai dengan yang dari URL untuk employee_absent_working
-        const dataRef = ref(database, 'employee_absent_working');
-        const dataSnapshot = await get(dataRef);
-
-        // Ambil data dari Firebase di mana umkm_uid sesuai dengan yang dari URL untuk employee_absent_closing
-        const closingDataRef = ref(database, 'employee_absent_closing');
-        const closingDataSnapshot = await get(closingDataRef);
-
-        // Buat objek untuk melacak baris berdasarkan nilai emp_nik unik
-        const empNikRows = {};
-        let rowIndex = 1; // Mulai penomoran dari 1
-
-        // Proses data employee_absent_closing ke dalam format yang sesuai
-        const closingData = {};
-        closingDataSnapshot.forEach((closingSnapshot) => {
-            const closingRecord = closingSnapshot.val();
-            const empNik = closingRecord.emp_nik;
-            const absentDate = closingRecord.absent_date;
-
-            if (!closingData[empNik]) {
-                closingData[empNik] = {};
-            }
-
-            if (!closingData[empNik][absentDate]) {
-                closingData[empNik][absentDate] = [];
-            }
-
-            closingData[empNik][absentDate].push(closingRecord);
-        });
-
-        // Loop melalui data dari employee_absent_working dan perbarui baris di worksheet
-        dataSnapshot.forEach((umkmSnapshot) => {
-            const umkmData = umkmSnapshot.val();
-
-            if (umkmData.umkm_uid === umkm_uid) {
-                const empNik = umkmData.emp_nik;
-
-                // Hanya proses jika karyawan aktif
-                if (employeeMap[empNik]) {
-                    const employeeDetails = employeeMap[empNik];
-
-                    // Jika emp_nik tidak ada dalam objek, tambahkan dengan array kosong
-                    if (!empNikRows[empNik]) {
-                        empNikRows[empNik] = Array.from({ length: daysInMonth + 2 }, () => '');
-                        empNikRows[empNik][0] = rowIndex++; // Set kolom 'No'
-                        empNikRows[empNik][1] = employeeDetails.emp_name; // Set kolom 'emp_name'
-                    }
-
-                    // Periksa apakah absent_date dan umkm_uid cocok dengan bulan dan tahun yang dipilih
-                    if (
-                        umkmData.absent_date &&
-                        umkmData.umkm_uid &&
-                        umkmData.umkm_uid === umkm_uid &&
-                        umkmData.absent_date.substring(0, 7) === `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`
-                    ) {
-                        // Dapatkan indeks kolom untuk tanggal
-                        const dateColumnIndex = parseInt(umkmData.absent_date.substring(8, 10)) + 1;
-
-                        // Gunakan absent_time jika tersedia di kolom tanggal
-                        empNikRows[empNik][dateColumnIndex] = umkmData.absent_time || '✓'; // Gunakan '✓' jika absent_time tidak tersedia
-                    }
+    onValue(employeeRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const employees = snapshot.val();
+            console.log("Employees found:", employees);
+            for (const key in employees) {
+                if (employees[key].umkm_uid === umkm_uid) {
+                    console.log("Matching employee:", employees[key]);
+                    const option = document.createElement('option');
+                    option.value = employees[key].emp_nik;
+                    option.textContent = employees[key].emp_name;
+                    employeeSelect.appendChild(option);
                 }
             }
-        });
+        } else {
+            console.log("No employees found.");
+        }
+    }, {
+        onlyOnce: true
+    });
+}
 
-        // Loop melalui data dari employee_absent_closing dan perbarui baris di worksheet
-        closingDataSnapshot.forEach((closingSnapshot) => {
-            const closingData = closingSnapshot.val();
-            const empNik = closingData.emp_nik;
-            const absentDate = closingData.absent_date;
+// Function to generate the PDF report
+async function generatePDFReport(dateFrom, dateTo) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "landscape", format: 'legal' });
 
-            if (
-                empNikRows[empNik] &&
-                absentDate &&
-                closingData.umkm_uid &&
-                closingData.umkm_uid === umkm_uid &&
-                absentDate.substring(0, 7) === `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`
-            ) {
-                const dateColumnIndex = parseInt(absentDate.substring(8, 10)) + 1;
+    const employeeSelect = document.getElementById('employee');
+    const selectedEmployee = employeeSelect.value;
+    const employeeRef = ref(database, 'employee');
+    const holidaysRef = ref(database, `umkm_holiday/${umkm_uid}`);
+    const workingRef = ref(database, 'employee_absent_working');
+    const closingRef = ref(database, 'employee_absent_closing');
+    const permitsRef = ref(database, 'emp_permit');
 
-                // Periksa apakah absent_time tersedia di closingData
-                if (closingData.absent_time) {
-                    // Jika sudah ada konten, tambahkan spasi dan kemudian absent_time
-                    if (empNikRows[empNik][dateColumnIndex]) {
-                        empNikRows[empNik][dateColumnIndex] += " -" + ` ${closingData.absent_time}`;
-                    } else {
-                        // Jika sel kosong, cukup atur absent_time
-                        empNikRows[empNik][dateColumnIndex] = closingData.absent_time;
-                    }
-                }
-            }
-        });
+    const holidaysSnapshot = await get(holidaysRef);
+    const holidays = holidaysSnapshot.exists() ? holidaysSnapshot.val() : {};
 
-        // Tambahkan baris dari objek ke worksheet
-        Object.values(empNikRows).forEach((row) => {
-            worksheet.addRow(row);
-        });
+    // Convert holiday values to an array of dates for easier checking
+    const holidayDates = Object.values(holidays).map(date => new Date(date).toISOString().split('T')[0]);
 
-        // Simpan workbook ke buffer
-        const buffer = await workbook.xlsx.writeBuffer();
+    const employeesSnapshot = await get(employeeRef);
+    const employees = employeesSnapshot.exists() ? employeesSnapshot.val() : {};
 
-        // Buat Blob dari buffer
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const workingSnapshot = await get(workingRef);
+    const working = workingSnapshot.exists() ? workingSnapshot.val() : {};
 
-        // Buat tautan unduhan dan mulai unduhan
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'absensi_masuk.xlsx';
-        link.click();
-    } catch (error) {
-        console.error('Export to Excel failed:', error);
+    const closingSnapshot = await get(closingRef);
+    const closing = closingSnapshot.exists() ? closingSnapshot.val() : {};
+
+    const permitsSnapshot = await get(permitsRef);
+    const permits = permitsSnapshot.exists() ? permitsSnapshot.val() : {};
+
+    let tableColumns = ["No", "Nama Karyawan"];
+    let currentDate = new Date(dateFrom);
+
+    // Prepare column headers for each date (only the day part)
+    while (currentDate <= dateTo) {
+        const day = currentDate.getDate(); // Get only the day part of the date
+        tableColumns.push(day);
+        currentDate.setDate(currentDate.getDate() + 1);
     }
-};
 
-//===================================================================================== LAPORAN ABSEN MASUK END
+    let reportData = [];
+    let index = 1;
+
+    for (let empKey in employees) {
+        if (selectedEmployee === 'all' || selectedEmployee === employees[empKey].emp_nik) {
+            let row = [index++, employees[empKey].emp_name];
+            currentDate = new Date(dateFrom);
+
+            while (currentDate <= dateTo) {
+                const dateString = currentDate.toISOString().split('T')[0];
+
+                let cellContent = '';
+
+                if (holidayDates.includes(dateString)) {
+                    cellContent = "Libur";
+                } else {
+                    const workKey = Object.keys(working).find(key => working[key].emp_nik === employees[empKey].emp_nik && working[key].absent_date === dateString);
+                    const closeKey = Object.keys(closing).find(key => closing[key].emp_nik === employees[empKey].emp_nik && closing[key].absent_date === dateString);
+                    const permitKey = Object.keys(permits).find(key => permits[key].emp_nik === employees[empKey].emp_nik && permits[key].leave_date === dateString);
+
+                    if (permitKey) {
+                        cellContent = `(${permits[permitKey].leave_reason})`;
+                    }
+
+                    if (workKey) {
+                        cellContent += (cellContent ? "\n" : "") + (working[workKey].absent_time || 'x');
+                    }
+
+                    if (closeKey) {
+                        cellContent += (cellContent ? "\n" : "") + (closing[closeKey].absent_time || 'x');
+                    }
+
+                    if (!workKey && !closeKey && !permitKey) {
+                        cellContent = 'x';
+                    }
+                }
+
+                row.push(cellContent);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            reportData.push(row);
+        }
+    }
+
+    // Add report header
+    const formattedDateFrom = dateFrom.toLocaleDateString('en-GB').split('/').join('-');
+    const formattedDateTo = dateTo.toLocaleDateString('en-GB').split('/').join('-');
+    doc.setFontSize(14);
+    doc.text('LAPORAN PRESENSI', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Periode ${formattedDateFrom} - ${formattedDateTo}`, doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
+    doc.text(umkm_name, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+
+    // Generate PDF content with table
+    doc.autoTable({
+        head: [tableColumns],
+        body: reportData,
+        startY: 40,
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', lineWidth: 0.25, halign: 'center' },
+        styles: { cellPadding: 2, fontSize: 7, halign: 'center', overflow: 'linebreak' },
+        columnStyles: {
+            0: { cellWidth: 8 }, // Fixed width for the "No" column
+            1: { cellWidth: 20 }, // Fixed width for the "Nama Karyawan" column
+        }
+    });
+
+    // Add "Mengetahui" and owner's name
+    const finalY = doc.autoTable.previous.finalY; // Get the y-coordinate after the table
+    doc.setFontSize(12);
+    doc.text('Mengetahui', doc.internal.pageSize.getWidth() - 50, finalY + 20, { align: 'center' });
+    doc.text(`Pemilik ${umkm_name}`, doc.internal.pageSize.getWidth() - 50, finalY + 40, { align: 'center' });
+
+    // Preview the PDF in a new window
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    window.open(url, '_blank');
+}

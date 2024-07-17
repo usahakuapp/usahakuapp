@@ -60,11 +60,17 @@ window.addEventListener("DOMContentLoaded", (event) => {
             const karyawanabsentclosingLink = document.querySelector("#karyawan-absent-closing");
             karyawanabsentclosingLink.href = `karyawan-absent-closing.html?uid=${user.uid}`;
 
+            const izinKaryawanLink = document.querySelector("#izin-karyawan");
+            izinKaryawanLink.href = `izin-karyawan.html?uid=${user.uid}`;
+
             const umkmOperationalLink = document.querySelector("#umkm-operational-link");
             umkmOperationalLink.href = `umkm-operational.html?uid=${user.uid}`;
 
             const umkmSalarycutLink = document.querySelector("#umkm-salarycut-link");
             umkmSalarycutLink.href = `umkm-salarycut.html?uid=${user.uid}`;
+
+            const umkmHolidayLink = document.querySelector("#umkm-holiday-link");
+            umkmHolidayLink.href = `umkm-holiday.html?uid=${user.uid}`;
             
             const reportAbsentWorkingLink = document.querySelector("#report-absent-working-link");
             reportAbsentWorkingLink.href = `report-absent-working.html?uid=${user.uid}`;
@@ -281,6 +287,9 @@ class SideBar extends HTMLElement{
                             <li class="sidebar-item">
                                 <a id="umkm-salarycut-link" class="sidebar-link">Potongan Gaji Karyawan</a>
                             </li>
+                            <li class="sidebar-item">
+                                <a id="umkm-holiday-link" class="sidebar-link">Pengaturan Hari Libur</a>
+                            </li>
                         </ul>
                     </li>
                     <li class="sidebar-item">
@@ -300,6 +309,9 @@ class SideBar extends HTMLElement{
                             </li>
                             <li class="sidebar-item">
                                 <a id="karyawan-absent-closing" class="sidebar-link">Log Absen Pulang</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a id="izin-karyawan" class="sidebar-link">Izin Dan Cuti Karyawan</a>
                             </li>
                         </ul>
                     </li>

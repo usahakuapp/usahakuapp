@@ -170,4 +170,144 @@
         }
 
         //========================================================================================== INSERT DATA END
+
+        //========================================================================================== INSERT DATA END
+
+    //========================================================================================== HARI LIBUR MULAI
+const addDateButton = document.getElementById("add_date_button");
+const holidayList = document.getElementById("holiday_list");
+const buttonAddHolidays = document.getElementById("button_add_holidays");
+const holidayDatesContainer = document.getElementById("holiday_dates_container");
+const filterMonthYear = document.getElementById("filterMonthYear");
+const holidayListContent = document.getElementById("holidayListContent");
+
+let holidayDates = [];
+
+if (addDateButton) {
+  addDateButton.addEventListener("click", () => {
+    const holidayInputWrapper = document.createElement("div");
+    holidayInputWrapper.className = "input-group mb-2";
+
+    const holidayInput = document.createElement("input");
+    holidayInput.type = "date";
+    holidayInput.className = "form-control";
+    holidayInput.required = true;
+
+    const removeButton = document.createElement("button");
+    removeButton.className = "btn btn-danger";
+    removeButton.textContent = "X";
+    removeButton.type = "button";
+    removeButton.addEventListener("click", () => {
+      holidayInputWrapper.remove();
+    });
+
+    holidayInputWrapper.appendChild(holidayInput);
+    holidayInputWrapper.appendChild(removeButton);
+
+    holidayDatesContainer.appendChild(holidayInputWrapper);
+  });
+}
+
+if (buttonAddHolidays) {
+  buttonAddHolidays.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    holidayDates = [];
+    const holidayInputs = holidayDatesContainer.querySelectorAll("input[type='date']");
+    holidayInputs.forEach(input => {
+      if (input.value) {
+        holidayDates.push(input.value);
+      }
+    });
+
+    if (holidayDates.length === 0) {
+      alert("Tambahkan tanggal hari libur terlebih dahulu.");
+      return;
+    }
+
+    if (!umkm_uid) {
+      alert("User tidak ditemukan. Silakan login ulang.");
+      return;
+    }
+
+    const holidaysData = {};
+    holidayDates.forEach((date, index) => {
+      holidaysData[`holiday${index}`] = date;
+    });
+
+    const holidaysRef = ref(database, `umkm_holiday/${umkm_uid}`);
+    set(holidaysRef, holidaysData).then(() => {
+      alert("Hari libur berhasil disimpan.");
+      holidayDates = [];
+      holidayList.innerHTML = "";
+      holidayDatesContainer.innerHTML = '<div class="input-group mb-2"><input class="form-control" required="" type="date" id="holiday_dates"><button class="btn btn-danger" type="button">X</button></div>';
+    }).catch((error) => {
+      console.error('Error saving holidays:', error);
+      alert("Gagal menyimpan hari libur. Silakan coba lagi.");
+    });
+  });
+}
+
+function showHolidays() {
+  const selectedMonthYear = filterMonthYear.value;
+  if (!selectedMonthYear) {
+    alert("Pilih bulan dan tahun terlebih dahulu.");
+    return;
+  }
+
+  const [selectedYear, selectedMonth] = selectedMonthYear.split("-");
+  const holidaysRef = ref(database, `umkm_holiday/${umkm_uid}`);
+
+  onValue(holidaysRef, (snapshot) => {
+    const holidaysData = snapshot.val();
+    holidayListContent.innerHTML = "";
+
+    if (holidaysData) {
+      for (const key in holidaysData) {
+        const holidayDate = holidaysData[key];
+        const holiday = new Date(holidayDate);
+        const holidayYear = holiday.getFullYear().toString();
+        const holidayMonth = (holiday.getMonth() + 1).toString().padStart(2, "0");
+
+        if (holidayYear === selectedYear && holidayMonth === selectedMonth) {
+          const listItem = document.createElement("li");
+          listItem.className = "list-group-item d-flex justify-content-between align-items-center";
+          listItem.textContent = holidayDate;
+
+          const removeButton = document.createElement("button");
+          removeButton.className = "btn btn-danger btn-sm";
+          removeButton.textContent = "X";
+          removeButton.addEventListener("click", () => {
+            removeHoliday(key);
+          });
+
+          listItem.appendChild(removeButton);
+          holidayListContent.appendChild(listItem);
+        }
+      }
+    } else {
+      const listItem = document.createElement("li");
+      listItem.className = "list-group-item";
+      listItem.textContent = "No holidays found for the selected month and year.";
+      holidayListContent.appendChild(listItem);
+    }
+  });
+}
+
+function removeHoliday(key) {
+  const holidayRef = ref(database, `umkm_holiday/${umkm_uid}/${key}`);
+  remove(holidayRef).then(() => {
+    alert("Hari libur berhasil dihapus.");
+    showHolidays(); // Refresh the list
+  }).catch((error) => {
+    console.error('Error removing holiday:', error);
+    alert("Gagal menghapus hari libur. Silakan coba lagi.");
+  });
+}
+
+filterMonthYear.addEventListener("change", showHolidays);
+
+//========================================================================================== HARI LIBUR SELESAI
+
     })
+
